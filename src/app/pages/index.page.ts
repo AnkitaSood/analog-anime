@@ -2,34 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { Component, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowDown, lucideArrowRight, lucideCheck, lucideChevronRight, lucideCompass, lucideExternalLink, lucideHeart, lucideLoaderCircle, lucideMoon, lucideSearch, lucideSparkles, lucideStar, lucideSun } from '@ng-icons/lucide';
+import { lucideArrowDown, lucideArrowRight, lucideCheck, lucideChevronRight, lucideCompass, lucideExternalLink, lucideHeart, lucideSearch, lucideSparkles } from '@ng-icons/lucide';
+import { AnimeCardComponent } from '@/shared/anime/anime-card.component';
+import { AnimeEntry, animeImage, AnimeRecommendation, JikanEnvelope } from '@/shared/anime/anime.models';
 import { ZardBadgeComponent } from '@/shared/components/badge';
 import { ZardButtonComponent } from '@/shared/components/button';
+import { SiteFooterComponent } from '@/shared/layout/site-footer.component';
+import { SiteHeaderComponent } from '@/shared/layout/site-header.component';
 import { RouteMeta } from '@analogjs/router';
-
-interface AnimeEntry {
-  mal_id: number;
-  url: string;
-  title: string;
-  title_english: string | null;
-  images: { webp?: { image_url?: string | null }; jpg?: { image_url?: string | null } };
-  score: number | null;
-  rank: number | null;
-  episodes: number | null;
-  year: number | null;
-  type: string | null;
-}
-
-interface AnimeRecommendation {
-  entry: AnimeEntry[];
-  content: string;
-  date: string;
-  user: { username: string; url: string };
-}
-
-interface JikanEnvelope<T> {
-  data: T;
-}
 
 interface AnimeFeed {
   topAnime: AnimeEntry[];
@@ -46,28 +26,11 @@ export const routeMeta: RouteMeta = {
 
 @Component({
   selector: 'app-home',
-  imports: [NgIcon, ZardBadgeComponent, ZardButtonComponent],
-  viewProviders: [provideIcons({ lucideArrowDown, lucideArrowRight, lucideCheck, lucideChevronRight, lucideCompass, lucideExternalLink, lucideHeart, lucideLoaderCircle, lucideMoon, lucideSearch, lucideSparkles, lucideStar, lucideSun })],
+  imports: [AnimeCardComponent, NgIcon, SiteFooterComponent, SiteHeaderComponent, ZardBadgeComponent, ZardButtonComponent],
+  viewProviders: [provideIcons({ lucideArrowDown, lucideArrowRight, lucideCheck, lucideChevronRight, lucideCompass, lucideExternalLink, lucideHeart, lucideSearch, lucideSparkles })],
   template: `
     <div class="site-shell">
-      <header class="topbar">
-        <a class="wordmark" href="#top" aria-label="Anime Index home">
-          <span class="brand-mark"><span></span><span></span><span></span></span>
-          <span>anime<span class="wordmark-light">index</span></span>
-        </a>
-        <nav class="main-nav" aria-label="Main navigation">
-          <a href="#top-anime">Top anime</a>
-          <a href="#recommendations">Community picks</a>
-        </nav>
-        <div class="header-actions">
-          <button type="button" class="theme-toggle" (click)="toggleTheme()" [attr.aria-label]="isDark() ? 'Switch to light mode' : 'Switch to dark mode'" [attr.title]="isDark() ? 'Switch to light mode' : 'Switch to dark mode'">
-            <ng-icon [name]="isDark() ? 'lucideSun' : 'lucideMoon'" />
-          </button>
-          <a class="mal-link" href="https://myanimelist.net/topanime.php" target="_blank" rel="noreferrer">
-            <span>MyAnimeList</span><ng-icon name="lucideExternalLink" />
-          </a>
-        </div>
-      </header>
+      <app-site-header />
 
       <main id="top">
         <section class="intro" aria-labelledby="page-title">
@@ -113,19 +76,7 @@ export const routeMeta: RouteMeta = {
           } @else if (filteredAnime().length) {
             <div class="anime-grid">
               @for (anime of filteredAnime(); track anime.mal_id; let i = $index) {
-                <a class="anime-card" [href]="anime.url" target="_blank" rel="noreferrer" [attr.aria-label]="anime.title + ' on MyAnimeList'">
-                  <div class="poster-wrap">
-                    <img class="poster" [src]="imageFor(anime)" [alt]="anime.title + ' poster'" [loading]="i < 4 ? 'eager' : 'lazy'" />
-                    <span class="rank-chip">#{{ anime.rank ?? i + 1 }}</span>
-                    @if (anime.score) { <span class="score-chip"><ng-icon name="lucideStar" /> {{ anime.score.toFixed(2) }}</span> }
-                    <span class="poster-link"><ng-icon name="lucideArrowRight" /></span>
-                  </div>
-                  <div class="card-caption">
-                    <div class="anime-meta"><span>{{ anime.type || 'Anime' }}</span>@if (anime.year) { <span class="meta-divider">·</span><span>{{ anime.year }}</span> }</div>
-                    <h3>{{ anime.title_english || anime.title }}</h3>
-                    <p>{{ anime.episodes ? anime.episodes + ' episodes' : 'Series & films' }}<span class="caption-arrow">↗</span></p>
-                  </div>
-                </a>
+                <a app-anime-card [anime]="anime" [rank]="anime.rank ?? i + 1" [eager]="i < 4"></a>
               }
             </div>
           } @else {
@@ -174,11 +125,7 @@ export const routeMeta: RouteMeta = {
         </section>
       </main>
 
-      <footer class="site-footer">
-        <a class="wordmark footer-wordmark" href="#top"><span class="brand-mark"><span></span><span></span><span></span></span><span>anime<span class="wordmark-light">index</span></span></a>
-        <p>Find the story you didn’t know you needed.</p>
-        <span class="data-credit">Anime data by <a href="https://jikan.moe" target="_blank" rel="noreferrer">Jikan API</a><span class="credit-divider">·</span> Images & rankings by MyAnimeList</span>
-      </footer>
+      <app-site-footer />
     </div>
   `,
 })
@@ -192,7 +139,6 @@ export default class HomePage implements OnInit {
   readonly topAnimeError = signal(false);
   readonly recommendationsError = signal(false);
   readonly query = signal('');
-  readonly isDark = signal(false);
   readonly placeholders = [1, 2, 3, 4, 5, 6, 7, 8];
   readonly filteredAnime = () => {
     const term = this.query().trim().toLocaleLowerCase();
@@ -202,19 +148,8 @@ export default class HomePage implements OnInit {
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      const savedTheme = window.localStorage.getItem('anime-index-theme');
-      const shouldUseDark = savedTheme ? savedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
-      this.isDark.set(shouldUseDark);
-      document.documentElement.classList.toggle('dark', shouldUseDark);
       this.loadFeed();
     }
-  }
-
-  toggleTheme(): void {
-    const nextThemeIsDark = !this.isDark();
-    this.isDark.set(nextThemeIsDark);
-    document.documentElement.classList.toggle('dark', nextThemeIsDark);
-    window.localStorage.setItem('anime-index-theme', nextThemeIsDark ? 'dark' : 'light');
   }
 
   loadFeed(): void {
@@ -270,7 +205,7 @@ export default class HomePage implements OnInit {
   }
 
   imageFor(anime: AnimeEntry): string {
-    return anime.images.webp?.image_url || anime.images.jpg?.image_url || '';
+    return animeImage(anime);
   }
 
   formatDate(value: string): string {
