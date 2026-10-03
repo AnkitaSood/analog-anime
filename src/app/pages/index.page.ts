@@ -4,7 +4,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowDown, lucideArrowRight, lucideCheck, lucideChevronRight, lucideCompass, lucideExternalLink, lucideHeart, lucideSearch, lucideSparkles } from '@ng-icons/lucide';
 import { AnimeCardComponent } from '@/shared/anime/anime-card.component';
-import { AnimeEntry, AnimeRecommendation, animeUrl, EdgeResponse } from '@/shared/anime/anime.models';
+import { AnimeEntry, AnimeRecommendation, animeUrl } from '@/shared/anime/anime.models';
 import { ZardBadgeComponent } from '@/shared/components/badge';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { SiteFooterComponent } from '@/shared/layout/site-footer.component';
@@ -157,44 +157,16 @@ export default class HomePage implements OnInit {
     this.error.set('');
     this.http.get<AnimeFeed>('/api/anime-feed').subscribe({
       next: (feed) => {
-        this.error.set('');
+        const topAnime = feed.topAnime ?? [];
+        this.topAnime.set(topAnime);
+        this.topAnimeError.set(topAnime.length === 0);
         this.recommendations.set(feed.recommendations ?? []);
         this.recommendationsError.set(feed.errors?.recommendations ?? false);
-
-        if (feed.topAnime?.length) {
-          this.topAnime.set(feed.topAnime);
-          this.topAnimeError.set(false);
-          this.loading.set(false);
-          return;
-        }
-
-        if (this.topAnime().length) {
-          this.topAnimeError.set(false);
-          this.loading.set(false);
-          return;
-        }
-
-        this.loadTopAnimeFromBrowser();
-      },
-      error: () => {
-        this.recommendationsError.set(true);
-        this.loadTopAnimeFromBrowser();
-      },
-    });
-  }
-
-  private loadTopAnimeFromBrowser(): void {
-    // jikan-edge has no `limit`, so trim its 50-entry page to the feed's 12.
-    this.http.get<EdgeResponse<AnimeEntry[]>>('https://jikan.lucashdo.com/v1/top/anime').subscribe({
-      next: (response) => {
-        const anime = (response.data ?? []).slice(0, 12);
-        this.topAnime.set(anime);
-        this.topAnimeError.set(anime.length === 0);
-        this.error.set(anime.length ? '' : 'The top anime list came back empty. Please try again shortly.');
         this.loading.set(false);
       },
       error: () => {
         this.topAnimeError.set(true);
+        this.recommendationsError.set(true);
         this.error.set('The top anime feed is temporarily unavailable. Please try again shortly.');
         this.loading.set(false);
       },
