@@ -241,7 +241,6 @@ h1 { margin: 19px 0 15px; font-family: var(--font-sans); font-size: clamp(43px, 
 .anime-card:hover .poster-link, .anime-card:focus-visible .poster-link { opacity: 1; transform: none; }
 .card-caption { padding: 11px 1px 0; }
 .anime-meta { display: flex; gap: 6px; align-items: center; color: var(--app-muted-text); font-size: 9px; }
-.meta-divider { color: var(--app-muted-text); }
 .card-caption h3 { overflow: hidden; margin-top: 5px; color: var(--card-foreground); font-family: var(--font-sans); font-size: 12px; font-weight: 700; line-height: 1.45; white-space: nowrap; text-overflow: ellipsis; }
 .card-caption p { margin-top: 3px; color: var(--app-muted-text); font-size: 9px; }
 .caption-arrow { float: right; color: var(--app-muted-text); font-size: 12px; }
@@ -284,7 +283,6 @@ h1 { margin: 19px 0 15px; font-family: var(--font-sans); font-size: clamp(43px, 
 .rec-byline { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: auto; color: var(--app-muted-text); font-size: 8px; }
 .rec-byline a { display: inline-flex; align-items: center; gap: 3px; color: var(--foreground); font-weight: 700; }
 .rec-byline a ng-icon { font-size: 9px; }
-.rec-byline time { margin-left: auto; }
 .recommendation-loading { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
 .recommendation-loading span { min-height: 250px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); }
 .rec-empty { padding: 26px; text-align: center; color: var(--app-muted-text); font-size: 12px; }
@@ -334,13 +332,10 @@ h1 { margin: 19px 0 15px; font-family: var(--font-sans); font-size: clamp(43px, 
 .browse-results { scroll-margin-top: 16px; }
 .anime-grid.browse-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 43px; padding-top: 22px; border-top: 1px solid var(--border); }
-.page-numbers { display: flex; align-items: center; gap: 6px; }
 .page-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 34px; height: 34px; padding: 0 10px; border: 1px solid var(--border); border-radius: 6px; color: var(--foreground); background: var(--card); font-size: 12px; font-weight: 600; cursor: pointer; transition: color .2s, background .2s, border-color .2s; }
 .page-button:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
-.page-button.is-current, .page-button.is-current:hover { border-color: var(--primary); color: var(--primary-foreground); background: var(--primary); }
 .page-button:disabled { opacity: .45; cursor: not-allowed; }
 .page-button ng-icon { font-size: 14px; }
-.page-gap { padding: 0 2px; color: var(--app-muted-text); font-size: 12px; }
 
 .site-footer { min-height: 94px; display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; gap: 12px; margin-top: 41px; border-top: 1px solid var(--border); }
 .footer-wordmark { font-size: 14px; }
@@ -400,7 +395,6 @@ h1 { margin: 19px 0 15px; font-family: var(--font-sans); font-size: clamp(43px, 
   .genre-chip { height: 28px; padding: 0 11px; font-size: 10px; }
   .pagination { margin-top: 31px; padding-top: 18px; }
   .page-step span { display: none; }
-  .page-numbers { gap: 4px; }
   .page-button { min-width: 32px; height: 32px; padding: 0 8px; }
   .rank-chip, .score-chip { top: 7px; padding: 5px 6px; font-size: 8px; }
   .rank-chip { left: 6px; }

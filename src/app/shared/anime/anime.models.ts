@@ -1,42 +1,43 @@
+// Shapes returned by jikan-edge (https://github.com/LucasHenriqueDiniz/jikan-edge), trimmed to what the app uses.
+// List routes return a slimmer entry than `/anime/{id}`: no rank, year, English title or image sizes.
+
 export interface AnimeEntry {
-  mal_id: number;
-  url: string;
+  malId: number;
+  url?: string; // missing on `/top/anime`; use `animeUrl()`
   title: string;
-  title_english: string | null;
-  images: { webp?: { image_url?: string | null }; jpg?: { image_url?: string | null } };
+  imageUrl: string | null;
   score: number | null;
-  rank: number | null;
   episodes: number | null;
-  year: number | null;
   type: string | null;
 }
 
 export interface AnimeRecommendation {
-  entry: AnimeEntry[];
+  malId: number;
+  title: string;
+  imageUrl: string | null;
+  recommendedMalId: number;
+  recommendedTitle: string;
+  recommendedImageUrl: string | null;
   content: string;
-  date: string;
-  user: { username: string; url: string };
+  username: string;
 }
 
 export interface AnimeGenre {
-  mal_id: number;
+  malId: number;
   name: string;
   count: number;
 }
 
-export interface JikanEnvelope<T> {
+export interface EdgePagination {
+  page: number;
+  limit: number;
+  count: number;
+  hasNextPage: boolean;
+}
+
+export interface EdgeResponse<T> {
   data: T;
-}
-
-export interface JikanPagination {
-  last_visible_page: number;
-  has_next_page: boolean;
-  current_page: number;
-  items: { count: number; total: number; per_page: number };
-}
-
-export interface JikanPage<T> extends JikanEnvelope<T[]> {
-  pagination: JikanPagination;
+  meta: { stale: boolean; pagination?: EdgePagination };
 }
 
 export const ANIME_TYPES = [
@@ -45,10 +46,7 @@ export const ANIME_TYPES = [
   { value: 'ova', label: 'OVA' },
   { value: 'special', label: 'Special' },
   { value: 'ona', label: 'ONA' },
-  { value: 'tv_special', label: 'TV Special' },
   { value: 'music', label: 'Music' },
-  { value: 'cm', label: 'Commercial' },
-  { value: 'pv', label: 'Promo video' },
 ] as const;
 
 export const ANIME_STATUSES = [
@@ -57,7 +55,7 @@ export const ANIME_STATUSES = [
   { value: 'upcoming', label: 'Upcoming' },
 ] as const;
 
-// Jikan's `rx` (Hentai) rating is intentionally left out.
+// The `rx` (Hentai) rating is intentionally left out.
 export const ANIME_RATINGS = [
   { value: 'g', label: 'G – All ages' },
   { value: 'pg', label: 'PG – Children' },
@@ -79,6 +77,6 @@ export interface AnimeSearchFilters {
   page: number;
 }
 
-export function animeImage(anime: AnimeEntry): string {
-  return anime.images.webp?.image_url || anime.images.jpg?.image_url || '';
+export function animeUrl(malId: number): string {
+  return `https://myanimelist.net/anime/${malId}`;
 }
