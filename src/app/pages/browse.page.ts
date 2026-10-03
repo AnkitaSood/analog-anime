@@ -90,7 +90,7 @@ function describeError(error: unknown): string {
             @if (searchDraft()) {
               <button type="button" class="clear-search" (click)="clearSearch()" aria-label="Clear search"><ng-icon name="lucideX" /></button>
             }
-            <button type="submit" z-button>Search</button>
+            <button type="submit" z-button zSize="lg">Search</button>
           </form>
         </section>
 
