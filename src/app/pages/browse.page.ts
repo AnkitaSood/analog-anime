@@ -146,13 +146,13 @@ function describeError(error: unknown): string {
           </div>
         </section>
 
-        <section class="content-section browse-results" aria-labelledby="results-title" #resultsTop>
+        <section class="content-section browse-results" aria-labelledby="results-label" #resultsTop>
           <div class="section-heading">
             <div class="section-title-wrap">
-              <span class="section-kicker">RESULTS</span>
-              <h2 id="results-title">
-                @if (filters().q) { Results for <span>“{{ filters().q }}”</span> } @else { Most <span>popular</span> }
-              </h2>
+              <span class="section-kicker" id="results-label">RESULTS</span>
+              @if (filters().q) {
+                <h2>Results for <span>“{{ filters().q }}”</span></h2>
+              }
             </div>
             @if (pagination()) {
               <span class="result-count">Page {{ filters().page }}</span>
