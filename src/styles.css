@@ -283,10 +283,13 @@ h1 { margin: 19px 0 15px; font-family: var(--font-sans); font-size: clamp(var(--
 .recommendations-header h2 { margin: 0; font-size: var(--text-5xl); letter-spacing: -1.7px; line-height: 1.13; }
 .recommendations-header h2 em { color: var(--primary); font-family: var(--font-serif); font-weight: 400; }
 .recommendations-header > p { max-width: 380px; padding-bottom: 3px; color: var(--app-muted-text); font-size: var(--text-base); line-height: 1.75; }
-.recommendation-list { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.recommendation-card { display: flex; flex-direction: column; min-width: 0; min-height: 290px; padding: 20px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); }
+.recommendation-list { container: rec-list / inline-size; }
+/* Two columns only when each card can be at least 480px wide; otherwise one full-width column. */
+.recommendation-list, .recommendation-loading { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr)); gap: 16px; }
+/* Cards are size containers so the pair layout responds to the card's width, not the viewport's. */
+.recommendation-card { container: rec-card / inline-size; display: flex; flex-direction: column; min-width: 0; min-height: 290px; padding: 20px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); }
 .rec-pair { position: relative; display: flex; align-items: center; gap: 12px; min-height: 112px; padding: 0 34px 16px 0; border-bottom: 1px solid var(--muted); }
-.rec-anime { display: flex; flex: 0 1 42%; align-items: center; gap: 12px; min-width: 0; }
+.rec-anime { display: flex; flex: 1 1 0; align-items: center; gap: 12px; min-width: 0; }
 .rec-anime img { width: 64px; height: 92px; flex: 0 0 auto; object-fit: cover; border-radius: 3px; background: var(--muted); }
 .rec-anime-title { overflow: hidden; color: var(--card-foreground); font-size: var(--text-sm); font-weight: 700; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 .pair-plus { display: grid; place-items: center; width: 24px; height: 24px; flex: 0 0 auto; border-radius: 50%; background: var(--muted); color: var(--app-muted-text); font-size: 13px; }
@@ -297,7 +300,16 @@ h1 { margin: 19px 0 15px; font-family: var(--font-sans); font-size: clamp(var(--
 .rec-byline { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: auto; color: var(--app-muted-text); font-size: var(--text-sm); }
 .rec-byline a { display: inline-flex; align-items: center; gap: 3px; color: var(--foreground); font-weight: 700; }
 .rec-byline a ng-icon { font-size: 12px; }
-.recommendation-loading { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+/* Single column: no need to pad cards to a shared height. */
+@container rec-list (max-width: 975px) { .recommendation-card { min-height: 0; } }
+/* In narrow cards, stack poster over title so titles get the full half-width. */
+@container rec-card (max-width: 419px) {
+  .rec-pair { align-items: flex-start; min-height: 96px; }
+  .rec-anime { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .rec-anime img { width: 54px; height: 78px; }
+  .pair-plus { margin-top: 27px; }
+  .rec-arrow { top: 39px; }
+}
 .recommendation-loading span { min-height: 290px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); }
 .rec-empty { padding: 26px; text-align: center; color: var(--app-muted-text); font-size: var(--text-base); }
 .rec-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 21px; padding-top: 17px; border-top: 1px solid var(--border); }
@@ -369,6 +381,8 @@ h1 { margin: 19px 0 15px; font-family: var(--font-sans); font-size: clamp(var(--
   .poster-wrap { height: 235px; }
   .anime-grid.browse-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .recommendations-section { padding: 34px 27px 22px; }
+  /* Stack title over description before the title gets squeezed. */
+  .recommendations-header { align-items: start; flex-direction: column; gap: 14px; }
   .recommendation-card { padding: 16px; }
   .rec-anime { gap: 6px; }
   .rec-anime img { width: 54px; height: 78px; }
@@ -422,23 +436,15 @@ h1 { margin: 19px 0 15px; font-family: var(--font-sans); font-size: clamp(var(--
   .recommendations-topline { flex-direction: column; align-items: flex-start; gap: 8px; }
   .section-kicker { font-size: var(--text-2xs); }
   .freshness { font-size: var(--text-2xs); letter-spacing: .8px; }
-  .recommendations-header { align-items: start; flex-direction: column; gap: 11px; margin: 15px 0 19px; }
+  .recommendations-header { gap: 11px; margin: 15px 0 19px; }
   .recommendations-header h2 { font-size: var(--text-4xl); }
   .recommendations-header > p { max-width: 380px; font-size: var(--text-base); }
-  .recommendation-list { grid-template-columns: 1fr; gap: 10px; }
+  .recommendation-list { gap: 10px; }
   .recommendation-card { min-height: 0; padding: 16px; }
-  .rec-pair { min-height: 96px; }
-  /* Stack poster over title so titles get the card's full half-width. */
-  .rec-pair { align-items: flex-start; }
-  .rec-anime { flex-basis: 42%; flex-direction: column; align-items: flex-start; gap: 8px; }
-  .pair-plus { margin-top: 27px; }
-  .rec-arrow { top: 39px; }
-  .rec-anime img { width: 54px; height: 78px; }
   .rec-anime-title { font-size: var(--text-sm); }
   .rec-quote { padding-top: 11px; }
   .rec-quote > p { font-size: var(--text-base); }
   .rec-byline { font-size: var(--text-xs); }
-  .recommendation-loading { grid-template-columns: 1fr; }
   .recommendation-loading span:nth-child(n+2) { display: none; }
   .rec-footer { gap: 8px; margin-top: 16px; padding-top: 14px; }
   .rec-footer > span, .rec-footer > a { gap: 5px; font-size: var(--text-sm); }
