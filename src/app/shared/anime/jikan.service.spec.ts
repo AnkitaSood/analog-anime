@@ -18,25 +18,26 @@ describe('JikanService', () => {
 
   afterEach(() => http.verify());
 
-  it('always requests SFW results, 20 per page, ordered by popularity when there is no query', () => {
+  it('orders by popularity when there is no query, without the params jikan-edge rejects', () => {
     service.searchAnime(noFilters).subscribe();
 
-    const req = http.expectOne((r) => r.url === 'https://api.jikan.moe/v4/anime');
-    expect(req.request.params.get('sfw')).toBe('true');
-    expect(req.request.params.get('limit')).toBe('20');
+    const req = http.expectOne((r) => r.url === 'https://jikan.lucashdo.com/v1/anime');
+    // jikan-edge answers 400 UNSUPPORTED_PARAMETER to these.
+    expect(req.request.params.has('sfw')).toBe(false);
+    expect(req.request.params.has('limit')).toBe(false);
     expect(req.request.params.get('page')).toBe('1');
     expect(req.request.params.get('order_by')).toBe('members');
     expect(req.request.params.get('sort')).toBe('desc');
     expect(req.request.params.has('q')).toBe(false);
-    req.flush({ data: [], pagination: {} });
+    req.flush({ data: [], meta: { stale: false } });
   });
 
-  it('sends every filter along with sfw', () => {
+  it('sends every filter', () => {
     service
       .searchAnime({ q: 'frieren', genres: [2, 10], type: 'tv', status: 'complete', rating: 'pg13', page: 3 })
       .subscribe();
 
-    const params = http.expectOne((r) => r.url === 'https://api.jikan.moe/v4/anime').request.params;
+    const params = http.expectOne((r) => r.url === 'https://jikan.lucashdo.com/v1/anime').request.params;
     expect(params.get('q')).toBe('frieren');
     expect(params.get('genres')).toBe('2,10');
     expect(params.get('type')).toBe('tv');
@@ -44,18 +45,16 @@ describe('JikanService', () => {
     expect(params.get('rating')).toBe('pg13');
     expect(params.get('page')).toBe('3');
     expect(params.has('order_by')).toBe(false);
-    expect(params.get('sfw')).toBe('true');
   });
 
-  it('loads only non-explicit genres, sorted by name, and caches them', () => {
+  it('loads genres from our cached API route and reuses them', () => {
     const received: string[][] = [];
     service.getGenres().subscribe((genres) => received.push(genres.map((g) => g.name)));
 
-    const req = http.expectOne('https://api.jikan.moe/v4/genres/anime?filter=genres');
-    req.flush({ data: [{ mal_id: 4, name: 'Comedy', count: 1 }, { mal_id: 1, name: 'Action', count: 1 }] });
+    http.expectOne('/api/genres').flush([{ malId: 1, name: 'Action', count: 1 }, { malId: 4, name: 'Comedy', count: 1 }]);
     service.getGenres().subscribe((genres) => received.push(genres.map((g) => g.name)));
 
-    http.expectNone('https://api.jikan.moe/v4/genres/anime?filter=genres');
+    http.expectNone('/api/genres');
     expect(received).toEqual([['Action', 'Comedy'], ['Action', 'Comedy']]);
   });
 });

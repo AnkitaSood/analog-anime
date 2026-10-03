@@ -1,4 +1,4 @@
-import { DecimalPipe, isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, ElementRef, inject, linkedSignal, PLATFORM_ID, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -15,7 +15,7 @@ import {
   AnimeEntry,
   AnimeGenre,
   AnimeSearchFilters,
-  JikanPagination,
+  EdgePagination,
 } from '@/shared/anime/anime.models';
 import { BROWSE_PAGE_SIZE, JikanService } from '@/shared/anime/jikan.service';
 import { ZardButtonComponent } from '@/shared/components/button';
@@ -44,7 +44,8 @@ function parseFilters(params: ParamMap): AnimeSearchFilters {
     type: pickOption(params.get('type'), ANIME_TYPES),
     status: pickOption(params.get('status'), ANIME_STATUSES),
     rating: pickOption(params.get('rating'), ANIME_RATINGS),
-    page: Number.isInteger(page) && page > 0 ? page : 1,
+    // jikan-edge refuses pages outside 1–1000 with a 400.
+    page: Number.isInteger(page) && page > 0 && page <= 1000 ? page : 1,
   };
 }
 
@@ -63,24 +64,16 @@ function sameFilters(a: AnimeSearchFilters, b: AnimeSearchFilters): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-/** Page numbers to show, with `null` marking a gap: 1 … 4 5 6 … 20 */
-function pageWindow(current: number, total: number): (number | null)[] {
-  const pages = [...new Set([1, current - 1, current, current + 1, total])]
-    .filter((page) => page >= 1 && page <= total)
-    .sort((a, b) => a - b);
-  return pages.flatMap((page, i) => (i > 0 && page - pages[i - 1] > 1 ? [null, page] : [page]));
-}
-
 function describeError(error: unknown): string {
   const status = error instanceof HttpErrorResponse ? error.status : 0;
-  if (status === 429) return 'Jikan is getting too many requests. Wait a few seconds and try again.';
-  if (status >= 500) return 'Jikan couldn’t reach MyAnimeList just now. Please try again shortly.';
+  if (status === 429) return 'The anime database is getting too many requests. Wait a few seconds and try again.';
+  if (status >= 500) return 'The anime database couldn’t reach MyAnimeList just now. Please try again shortly.';
   return 'Something went wrong while searching. Check your connection and try again.';
 }
 
 @Component({
   selector: 'app-browse',
-  imports: [AnimeCardComponent, DecimalPipe, NgIcon, SiteFooterComponent, SiteHeaderComponent, ZardButtonComponent],
+  imports: [AnimeCardComponent, NgIcon, SiteFooterComponent, SiteHeaderComponent, ZardButtonComponent],
   viewProviders: [provideIcons({ lucideArrowRight, lucideChevronLeft, lucideChevronRight, lucideCompass, lucideSearch, lucideX })],
   template: `
     <div class="site-shell">
@@ -139,8 +132,8 @@ function describeError(error: unknown): string {
             <span id="genre-label" class="filter-label">Genres</span>
             @if (genres().length) {
               <div class="genre-chips">
-                @for (genre of genres(); track genre.mal_id) {
-                  <button type="button" class="genre-chip" [class.is-selected]="selectedGenres().has(genre.mal_id)" [attr.aria-pressed]="selectedGenres().has(genre.mal_id)" (click)="toggleGenre(genre.mal_id)">{{ genre.name }}</button>
+                @for (genre of genres(); track genre.malId) {
+                  <button type="button" class="genre-chip" [class.is-selected]="selectedGenres().has(genre.malId)" [attr.aria-pressed]="selectedGenres().has(genre.malId)" (click)="toggleGenre(genre.malId)">{{ genre.name }}</button>
                 }
               </div>
             } @else if (genresError()) {
@@ -161,8 +154,8 @@ function describeError(error: unknown): string {
                 @if (filters().q) { Results for <span>“{{ filters().q }}”</span> } @else { Most <span>popular</span> }
               </h2>
             </div>
-            @if (pagination(); as page) {
-              <span class="result-count">{{ page.items.total | number }} titles · Page {{ filters().page }} of {{ totalPages() }}</span>
+            @if (pagination()) {
+              <span class="result-count">Page {{ filters().page }}</span>
             }
           </div>
 
@@ -176,24 +169,16 @@ function describeError(error: unknown): string {
             <div class="empty-state"><span class="empty-icon"><ng-icon name="lucideCompass" /></span><h3>Results couldn’t load.</h3><p>{{ error() }}</p><button type="button" z-button zType="outline" (click)="retry()">Try again <ng-icon name="lucideArrowRight" /></button></div>
           } @else if (results().length) {
             <div class="anime-grid browse-grid">
-              @for (anime of results(); track anime.mal_id; let i = $index) {
-                <a app-anime-card [anime]="anime" [rank]="anime.rank" [eager]="i < 5"></a>
+              @for (anime of results(); track anime.malId; let i = $index) {
+                <a app-anime-card [anime]="anime" [eager]="i < 5"></a>
               }
             </div>
 
-            @if (totalPages() > 1) {
+            <!-- jikan-edge gives no total count, so paging is Prev/Next only. -->
+            @if (filters().page > 1 || pagination()?.hasNextPage) {
               <nav class="pagination" aria-label="Results pages">
                 <button type="button" class="page-button page-step" [disabled]="filters().page <= 1" (click)="goToPage(filters().page - 1)" aria-label="Previous page"><ng-icon name="lucideChevronLeft" /><span>Prev</span></button>
-                <div class="page-numbers">
-                  @for (item of pageItems(); track $index) {
-                    @if (item) {
-                      <button type="button" class="page-button" [class.is-current]="item === filters().page" [attr.aria-current]="item === filters().page ? 'page' : null" (click)="goToPage(item)">{{ item }}</button>
-                    } @else {
-                      <span class="page-gap" aria-hidden="true">…</span>
-                    }
-                  }
-                </div>
-                <button type="button" class="page-button page-step" [disabled]="!pagination()?.has_next_page" (click)="goToPage(filters().page + 1)" aria-label="Next page"><span>Next</span><ng-icon name="lucideChevronRight" /></button>
+                <button type="button" class="page-button page-step" [disabled]="!pagination()?.hasNextPage" (click)="goToPage(filters().page + 1)" aria-label="Next page"><span>Next</span><ng-icon name="lucideChevronRight" /></button>
               </nav>
             }
           } @else {
@@ -230,7 +215,7 @@ export default class BrowsePage {
   readonly genres = signal<AnimeGenre[]>([]);
   readonly genresError = signal(false);
   readonly results = signal<AnimeEntry[]>([]);
-  readonly pagination = signal<JikanPagination | null>(null);
+  readonly pagination = signal<EdgePagination | null>(null);
   readonly loading = signal(true);
   readonly error = signal('');
 
@@ -239,8 +224,6 @@ export default class BrowsePage {
     const { genres, type, status, rating } = this.filters();
     return genres.length + [type, status, rating].filter(Boolean).length;
   });
-  readonly totalPages = computed(() => Math.max(this.pagination()?.last_visible_page ?? 1, 1));
-  readonly pageItems = computed(() => pageWindow(this.filters().page, this.totalPages()));
 
   constructor() {
     if (!this.isBrowser) return;
@@ -265,7 +248,7 @@ export default class BrowsePage {
       )
       .subscribe(({ response, error }) => {
         this.results.set(response?.data ?? []);
-        this.pagination.set(response?.pagination ?? null);
+        this.pagination.set(response?.meta.pagination ?? null);
         this.error.set(response ? '' : describeError(error));
         this.loading.set(false);
       });

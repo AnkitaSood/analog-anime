@@ -4,7 +4,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowDown, lucideArrowRight, lucideCheck, lucideChevronRight, lucideCompass, lucideExternalLink, lucideHeart, lucideSearch, lucideSparkles } from '@ng-icons/lucide';
 import { AnimeCardComponent } from '@/shared/anime/anime-card.component';
-import { AnimeEntry, animeImage, AnimeRecommendation, JikanEnvelope } from '@/shared/anime/anime.models';
+import { AnimeEntry, AnimeRecommendation, animeUrl, EdgeResponse } from '@/shared/anime/anime.models';
 import { ZardBadgeComponent } from '@/shared/components/badge';
 import { ZardButtonComponent } from '@/shared/components/button';
 import { SiteFooterComponent } from '@/shared/layout/site-footer.component';
@@ -72,11 +72,11 @@ export const routeMeta: RouteMeta = {
               }
             </div>
           } @else if (error() || topAnimeError()) {
-            <div class="empty-state"><span class="empty-icon"><ng-icon name="lucideCompass" /></span><h3>The top anime list couldn’t load.</h3><p>{{ error() || 'Jikan could not return the top anime feed. Community picks may still be available below.' }}</p><button type="button" z-button zType="outline" (click)="loadFeed()">Try again <ng-icon name="lucideArrowRight" /></button></div>
+            <div class="empty-state"><span class="empty-icon"><ng-icon name="lucideCompass" /></span><h3>The top anime list couldn’t load.</h3><p>{{ error() || 'The top anime feed couldn’t be loaded. Community picks may still be available below.' }}</p><button type="button" z-button zType="outline" (click)="loadFeed()">Try again <ng-icon name="lucideArrowRight" /></button></div>
           } @else if (filteredAnime().length) {
             <div class="anime-grid">
-              @for (anime of filteredAnime(); track anime.mal_id; let i = $index) {
-                <a app-anime-card [anime]="anime" [rank]="anime.rank ?? i + 1" [eager]="i < 4"></a>
+              @for (anime of filteredAnime(); track anime.malId; let i = $index) {
+                <a app-anime-card [anime]="anime" [rank]="i + 1" [eager]="i < 4"></a>
               }
             </div>
           } @else {
@@ -94,22 +94,22 @@ export const routeMeta: RouteMeta = {
 
           @if (!loading() && recommendations().length) {
             <div class="recommendation-list">
-              @for (recommendation of recommendations(); track recommendation.date + recommendation.user.username + $index) {
+              @for (recommendation of recommendations(); track recommendation.malId + '-' + recommendation.recommendedMalId + '-' + recommendation.username) {
                 <article class="recommendation-card">
                   <div class="rec-pair">
-                    @for (anime of recommendation.entry.slice(0, 2); track anime.mal_id; let pairIndex = $index) {
+                    @for (anime of pairFor(recommendation); track anime.malId; let pairIndex = $index) {
                       <a class="rec-anime" [href]="anime.url" target="_blank" rel="noreferrer">
-                        <img [src]="imageFor(anime)" [alt]="anime.title + ' poster'" loading="lazy" />
-                        <span class="rec-anime-title">{{ anime.title_english || anime.title }}</span>
+                        <img [src]="anime.imageUrl ?? ''" [alt]="anime.title + ' poster'" loading="lazy" />
+                        <span class="rec-anime-title">{{ anime.title }}</span>
                       </a>
-                      @if (pairIndex === 0 && recommendation.entry.length > 1) { <span class="pair-plus" aria-hidden="true">+</span> }
+                      @if (pairIndex === 0) { <span class="pair-plus" aria-hidden="true">+</span> }
                     }
                     <span class="rec-arrow" aria-hidden="true"><ng-icon name="lucideArrowRight" /></span>
                   </div>
                   <div class="rec-quote">
                     <span class="quote-mark">“</span>
                     <p>{{ recommendation.content || 'Fans of one found something to love in the other.' }}</p>
-                    <div class="rec-byline"><span>Recommended by</span><a [href]="recommendation.user.url" target="_blank" rel="noreferrer">{{ recommendation.user.username }} <ng-icon name="lucideExternalLink" /></a><time [attr.datetime]="recommendation.date">{{ formatDate(recommendation.date) }}</time></div>
+                    <div class="rec-byline"><span>Recommended by</span><a [href]="profileUrl(recommendation.username)" target="_blank" rel="noreferrer">{{ recommendation.username }} <ng-icon name="lucideExternalLink" /></a></div>
                   </div>
                 </article>
               }
@@ -143,7 +143,7 @@ export default class HomePage implements OnInit {
   readonly filteredAnime = () => {
     const term = this.query().trim().toLocaleLowerCase();
     if (!term) return this.topAnime();
-    return this.topAnime().filter((anime) => `${anime.title} ${anime.title_english ?? ''}`.toLocaleLowerCase().includes(term));
+    return this.topAnime().filter((anime) => anime.title.toLocaleLowerCase().includes(term));
   };
 
   ngOnInit(): void {
@@ -184,12 +184,13 @@ export default class HomePage implements OnInit {
   }
 
   private loadTopAnimeFromBrowser(): void {
-    this.http.get<JikanEnvelope<AnimeEntry[]>>('https://api.jikan.moe/v4/top/anime?limit=12').subscribe({
+    // jikan-edge has no `limit`, so trim its 50-entry page to the feed's 12.
+    this.http.get<EdgeResponse<AnimeEntry[]>>('https://jikan.lucashdo.com/v1/top/anime').subscribe({
       next: (response) => {
-        const anime = response.data ?? [];
+        const anime = (response.data ?? []).slice(0, 12);
         this.topAnime.set(anime);
         this.topAnimeError.set(anime.length === 0);
-        this.error.set(anime.length ? '' : 'Jikan returned an empty top anime list. Please try again shortly.');
+        this.error.set(anime.length ? '' : 'The top anime list came back empty. Please try again shortly.');
         this.loading.set(false);
       },
       error: () => {
@@ -204,12 +205,14 @@ export default class HomePage implements OnInit {
     this.query.set((event.target as HTMLInputElement).value);
   }
 
-  imageFor(anime: AnimeEntry): string {
-    return animeImage(anime);
+  pairFor(recommendation: AnimeRecommendation): { malId: number; title: string; imageUrl: string | null; url: string }[] {
+    return [
+      { malId: recommendation.malId, title: recommendation.title, imageUrl: recommendation.imageUrl, url: animeUrl(recommendation.malId) },
+      { malId: recommendation.recommendedMalId, title: recommendation.recommendedTitle, imageUrl: recommendation.recommendedImageUrl, url: animeUrl(recommendation.recommendedMalId) },
+    ];
   }
 
-  formatDate(value: string): string {
-    if (!value) return '';
-    return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(value));
+  profileUrl(username: string): string {
+    return `https://myanimelist.net/profile/${encodeURIComponent(username)}`;
   }
 }
