@@ -80,3 +80,26 @@ export interface AnimeSearchFilters {
 export function animeUrl(malId: number): string {
   return `https://myanimelist.net/anime/${malId}`;
 }
+
+/** An anime saved to the favorites database, as returned by `/api/favorites`. */
+export interface FavoriteAnime extends AnimeEntry {
+  url: string;
+  addedAt: string; // ISO timestamp
+}
+
+export interface AnimeNews {
+  malId: number;
+  title: string;
+  url: string;
+  imageUrl: string | null;
+  excerpt: string;
+  date: string; // e.g. "Nov 5, 2018 2:27 PM"; the year is left off for this year's news
+  author: string;
+}
+
+/** Served by `/api/anime/:malId/details`. Each part fails independently, flagged in `errors`. */
+export interface AnimeDetails {
+  synopsis: string | null;
+  news: AnimeNews[];
+  errors: { synopsis: boolean; news: boolean };
+}

@@ -183,7 +183,10 @@
 
 .site-shell { overflow: hidden; }
 .topbar, main, .site-footer { width: min(1120px, calc(100% - 64px)); margin-inline: auto; }
-.topbar { height: 82px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+/* Equal side columns keep the nav centered however wide the wordmark and actions are. */
+.topbar { height: 82px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; border-bottom: 1px solid var(--border); }
+.topbar .wordmark { justify-self: start; }
+.topbar .header-actions { justify-self: end; }
 .wordmark { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-sans); font-size: var(--text-xl); font-weight: 800; letter-spacing: -.9px; }
 .wordmark-light { color: var(--app-muted-text); font-weight: 500; }
 .brand-mark { display: inline-flex; align-items: end; gap: 2px; width: 21px; height: 22px; padding: 3px 0; }
@@ -195,11 +198,14 @@
 .theme-toggle { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 50%; color: var(--foreground); background: var(--card); cursor: pointer; transition: color .2s, background .2s, border-color .2s; }
 .theme-toggle:hover { color: var(--primary); border-color: var(--primary); }
 .theme-toggle ng-icon { font-size: 15px; }
-.main-nav { display: flex; gap: 36px; margin-left: -60px; color: var(--app-muted-text); font-size: var(--text-base); font-weight: 600; }
+.main-nav { display: flex; gap: 36px; color: var(--app-muted-text); font-size: var(--text-base); font-weight: 600; }
 .main-nav a, .mal-link, .data-credit a { transition: color .2s ease; }
 .main-nav a:hover, .mal-link:hover, .data-credit a:hover { color: var(--primary); }
 .mal-link { display: inline-flex; align-items: center; gap: 7px; font-size: var(--text-sm); color: var(--app-muted-text); font-weight: 600; }
 .mal-link ng-icon, .data-credit ng-icon { font-size: 12px; }
+.account-link { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border: 1px solid var(--border); border-radius: 999px; color: var(--foreground); background: var(--card); font-size: var(--text-sm); font-weight: 600; cursor: pointer; transition: color .2s, border-color .2s; }
+.account-link:hover { color: var(--primary); border-color: var(--primary); }
+.account-link ng-icon { font-size: 14px; }
 
 .intro { min-height: 435px; display: flex; align-items: center; justify-content: space-between; position: relative; border-bottom: 1px solid var(--border); }
 .intro-copy { padding: 54px 0 61px; position: relative; z-index: 2; }
@@ -241,7 +247,11 @@ h1 { margin: 19px 0 15px; font-family: var(--font-sans); font-size: clamp(var(--
 .clear-search { flex: 0 0 auto; display: grid; place-items: center; padding: 0; width: 18px; height: 18px; border: 0; border-radius: 50%; background: var(--muted); color: var(--foreground); cursor: pointer; font-size: 10px; }
 .result-count { color: var(--app-muted-text); font-size: var(--text-sm); white-space: nowrap; }
 .anime-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 27px 18px; }
-.anime-card { min-width: 0; display: block; }
+.anime-card { position: relative; isolation: isolate; min-width: 0; display: block; }
+/* The title link covers the whole card; the favorite button sits above it. */
+.card-link::after { content: ''; position: absolute; z-index: 3; inset: 0; }
+.card-link:focus-visible { outline: 0; }
+.anime-card:has(.card-link:focus-visible) { outline: 2px solid var(--ring); outline-offset: 4px; border-radius: 6px; }
 .poster-wrap { height: 220px; position: relative; overflow: hidden; border-radius: 5px; background: var(--muted); box-shadow: var(--shadow-xs); }
 .poster { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .45s cubic-bezier(.2,.7,.3,1); }
 .anime-card:hover .poster { transform: scale(1.045); }
@@ -252,7 +262,17 @@ h1 { margin: 19px 0 15px; font-family: var(--font-sans); font-size: clamp(var(--
 .score-chip ng-icon { color: var(--chart-5); font-size: 10px; }
 .poster-link { position: absolute; z-index: 2; right: 8px; bottom: 8px; display: grid; place-items: center; width: 28px; height: 28px; color: var(--foreground); border-radius: 50%; background: var(--card); opacity: 0; transform: translateY(5px); transition: .2s; }
 .poster-link ng-icon { font-size: 14px; }
-.anime-card:hover .poster-link, .anime-card:focus-visible .poster-link { opacity: 1; transform: none; }
+.anime-card:hover .poster-link, .anime-card:has(.card-link:focus-visible) .poster-link { opacity: 1; transform: none; }
+.favorite-toggle { position: absolute; z-index: 4; left: 8px; bottom: 8px; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; color: var(--foreground); background: var(--card); box-shadow: var(--shadow-xs); cursor: pointer; opacity: 0; transform: translateY(5px); transition: .2s; }
+.favorite-toggle ng-icon { font-size: 15px; }
+.favorite-toggle:hover:not(:disabled) { color: var(--primary); }
+.favorite-toggle.is-favorite { color: var(--primary); }
+.favorite-toggle.is-favorite svg { fill: currentColor; }
+.favorite-toggle:disabled { cursor: default; }
+.favorite-toggle:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.anime-card:hover .favorite-toggle, .anime-card:has(.card-link:focus-visible) .favorite-toggle, .favorite-toggle:focus-visible, .favorite-toggle.is-favorite { opacity: 1; transform: none; }
+/* No hover on touch screens, so the button is always shown there. */
+@media (hover: none) { .favorite-toggle { opacity: 1; transform: none; } }
 .card-caption { padding: 11px 1px 0; }
 .anime-meta { display: flex; gap: 6px; align-items: center; color: var(--app-muted-text); font-size: var(--text-xs); }
 .card-caption h3 { overflow: hidden; margin-top: 6px; color: var(--card-foreground); font-family: var(--font-sans); font-size: var(--text-base); font-weight: 700; line-height: 1.45; white-space: nowrap; text-overflow: ellipsis; }
@@ -274,6 +294,54 @@ h1 { margin: 19px 0 15px; font-family: var(--font-sans); font-size: clamp(var(--
 .empty-state button { gap: 7px; }
 .empty-state button ng-icon { font-size: 13px; }
 .search-empty { padding: 38px 20px; }
+.empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+
+/* Favorites: one full-width section per anime, styled like the recommendations section. */
+.favorite-list { display: grid; gap: 24px; }
+.favorite-card { display: grid; grid-template-columns: 210px minmax(0, 1fr); grid-template-areas: "poster synopsis" "news news"; gap: 30px 40px; padding: 36px 40px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--secondary); }
+.favorite-poster { grid-area: poster; align-self: start; }
+.favorite-poster .poster-wrap { height: auto; aspect-ratio: .72; }
+/* The section heading already shows the title. Collapse it rather than hide it: it holds the link that covers the card. */
+.favorite-poster .card-caption h3 { height: 0; margin: 0; overflow: hidden; }
+.favorite-synopsis { grid-area: synopsis; display: flex; flex-direction: column; min-width: 0; }
+.favorite-synopsis h2 { margin: 9px 0 16px; font-family: var(--font-sans); font-size: var(--text-4xl); font-weight: 600; line-height: 1.2; letter-spacing: -1.3px; }
+.synopsis-text { display: grid; gap: 12px; max-width: 72ch; }
+.synopsis-text p { color: var(--card-foreground); font-family: var(--font-serif); font-size: var(--text-base); line-height: 1.75; }
+.synopsis-loading { display: grid; max-width: 72ch; }
+.favorite-more { display: inline-flex; align-items: center; gap: 6px; align-self: start; margin-top: auto; padding-top: 20px; color: var(--primary); font-size: var(--text-sm); font-weight: 600; }
+.favorite-more:hover { text-decoration: underline; }
+.favorite-more ng-icon { font-size: 14px; }
+.favorite-news { grid-area: news; min-width: 0; padding-top: 26px; border-top: 1px solid var(--border); }
+.news-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.news-list li { min-width: 0; }
+.news-item { display: flex; gap: 14px; height: 100%; padding: 16px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); transition: border-color .2s; }
+a.news-item:hover { border-color: var(--primary); }
+a.news-item:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.news-thumb { flex: 0 0 auto; width: 64px; height: 64px; object-fit: cover; border-radius: 4px; background: var(--muted); }
+.news-thumb-empty { display: grid; place-items: center; color: var(--app-muted-text); font-size: 20px; }
+.news-body { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.news-meta { color: var(--app-muted-text); font-size: var(--text-xs); }
+.news-title { display: -webkit-box; overflow: hidden; color: var(--card-foreground); font-size: var(--text-sm); font-weight: 700; line-height: 1.4; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.news-excerpt { display: -webkit-box; overflow: hidden; color: var(--app-muted-text); font-size: var(--text-xs); line-height: 1.55; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.news-skeleton-lines { flex: 1; }
+.favorite-status { margin-top: 14px; color: var(--app-muted-text); font-size: var(--text-sm); }
+.favorite-synopsis .favorite-status { margin-top: 0; }
+.favorite-status button { display: inline-flex; align-items: center; gap: 5px; margin-left: 6px; padding: 0; border: 0; background: none; color: var(--primary); font: inherit; font-weight: 600; cursor: pointer; }
+.favorite-status button ng-icon { font-size: 12px; }
+
+.auth-panel { max-width: 420px; padding: 54px 0 70px; }
+.auth-panel h1 { margin: 14px 0 10px; font-size: clamp(var(--text-4xl), 5vw, var(--text-5xl)); letter-spacing: -2px; }
+.auth-panel > p { color: var(--app-muted-text); font-size: var(--text-base); line-height: 1.7; }
+.auth-form { display: grid; gap: 16px; margin-top: 28px; }
+.auth-field { display: grid; gap: 7px; }
+.auth-field input { height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; outline: 0; color: var(--foreground); background: var(--card); font-size: var(--text-base); transition: border-color .2s, box-shadow .2s; }
+.auth-field input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary) 16%, transparent); }
+.auth-hint { color: var(--app-muted-text); font-size: var(--text-xs); }
+.auth-error { padding: 10px 12px; border-radius: 6px; color: var(--destructive); background: color-mix(in oklch, var(--destructive) 10%, transparent); font-size: var(--text-sm); }
+.auth-form [z-button] { width: 100%; }
+.auth-switch { margin-top: 20px; color: var(--app-muted-text); font-size: var(--text-sm); }
+.auth-switch button { padding: 0; border: 0; background: none; color: var(--primary); font: inherit; font-weight: 600; cursor: pointer; }
+.auth-switch button:hover { text-decoration: underline; }
 
 .recommendations-section { padding: 43px 43px 25px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--secondary); }
 .recommendations-topline { display: flex; justify-content: space-between; align-items: center; }
@@ -374,6 +442,10 @@ h1 { margin: 19px 0 15px; font-family: var(--font-sans); font-size: clamp(var(--
 @media (min-width: 1200px) { .anime-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 @media (max-width: 900px) {
   .topbar, main, .site-footer { width: min(100% - 48px, 760px); }
+  /* Icon-only actions leave the centered nav room beside the wordmark. */
+  .mal-link, .account-link { font-size: 0; gap: 0; }
+  .mal-link ng-icon, .account-link ng-icon { font-size: 15px; }
+  .account-link { width: 34px; padding: 0; justify-content: center; }
   .intro { min-height: 380px; }
   .intro-aside { width: 310px; flex-basis: 310px; margin-right: 0; transform: scale(.83); transform-origin: center right; }
   h1 { font-size: var(--text-6xl); }
@@ -384,19 +456,25 @@ h1 { margin: 19px 0 15px; font-family: var(--font-sans); font-size: clamp(var(--
   /* Stack title over description before the title gets squeezed. */
   .recommendations-header { align-items: start; flex-direction: column; gap: 14px; }
   .recommendation-card { padding: 16px; }
+  /* Below desktop the favorite sections stack: poster, then synopsis, then news. */
+  .favorite-card { grid-template-columns: minmax(0, 1fr); grid-template-areas: "poster" "synopsis" "news"; gap: 24px; padding: 28px 27px; }
+  .favorite-poster { width: 180px; }
+  .favorite-synopsis h2 { font-size: var(--text-3xl); }
+  .news-list { grid-template-columns: minmax(0, 1fr); }
   .rec-anime { gap: 6px; }
   .rec-anime img { width: 54px; height: 78px; }
 }
 @media (max-width: 640px) {
   .topbar, main, .site-footer { width: calc(100% - 36px); }
+  .favorite-card { gap: 20px; padding: 20px 18px; }
+  .favorite-poster { width: 150px; }
+  .favorite-synopsis h2 { font-size: var(--text-2xl); letter-spacing: -.8px; }
   /* The nav gets its own row so the larger text doesn't crowd the wordmark. */
-  .topbar { height: auto; flex-wrap: wrap; row-gap: 4px; padding: 14px 0 0; }
+  .topbar { height: auto; display: flex; justify-content: space-between; flex-wrap: wrap; row-gap: 4px; padding: 14px 0 0; }
   .wordmark { font-size: var(--text-lg); }
   .main-nav { order: 3; width: 100%; gap: 22px; margin: 0; padding: 10px 0 12px; font-size: var(--text-sm); white-space: nowrap; }
   .header-actions { gap: 8px; }
   .theme-toggle { width: 31px; height: 31px; }
-  .mal-link { font-size: 0; gap: 0; }
-  .mal-link ng-icon { font-size: 15px; }
   .intro { min-height: initial; }
   .intro-copy { padding: 42px 0 38px; }
   .eyebrow { padding: 6px 9px; font-size: var(--text-2xs); }

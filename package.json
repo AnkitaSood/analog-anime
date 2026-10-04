@@ -12,7 +12,10 @@
     "build": "vite build",
     "watch": "vite build --watch",
     "test": "vitest",
-    "preview": "node dist/analog/server/index.mjs"
+    "preview": "node dist/analog/server/index.mjs",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "private": true,
   "dependencies": {
@@ -29,8 +32,11 @@
     "@ng-icons/core": "^36.1.0",
     "@ng-icons/lucide": "^36.1.0",
     "@tailwindcss/vite": "^4.1.4",
+    "better-auth": "^1.7.7",
+    "better-sqlite3": "^13.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "drizzle-orm": "^0.45.3",
     "front-matter": "^4.0.2",
     "marked": "^15.0.7",
     "marked-gfm-heading-id": "^4.1.1",
@@ -50,6 +56,8 @@
     "@angular/build": "^22.0.0",
     "@angular/cli": "^22.0.0",
     "@angular/compiler-cli": "^22.0.0",
+    "@types/better-sqlite3": "^9.6.0",
+    "drizzle-kit": "^0.31.11",
     "jsdom": "^22.0.0",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "~6.0.0",

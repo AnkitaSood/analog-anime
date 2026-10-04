@@ -76,7 +76,7 @@ export const routeMeta: RouteMeta = {
           } @else if (filteredAnime().length) {
             <div class="anime-grid">
               @for (anime of filteredAnime(); track anime.malId; let i = $index) {
-                <a app-anime-card [anime]="anime" [rank]="i + 1" [eager]="i < 4"></a>
+                <app-anime-card [anime]="anime" [rank]="i + 1" [eager]="i < 4" />
               }
             </div>
           } @else {

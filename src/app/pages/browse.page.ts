@@ -170,7 +170,7 @@ function describeError(error: unknown): string {
           } @else if (results().length) {
             <div class="anime-grid browse-grid">
               @for (anime of results(); track anime.malId; let i = $index) {
-                <a app-anime-card [anime]="anime" [eager]="i < 5"></a>
+                <app-anime-card [anime]="anime" [eager]="i < 5" />
               }
             </div>
 
