@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { RouteMeta } from '@analogjs/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight, lucideCompass, lucideHeart, lucideLogIn } from '@ng-icons/lucide';
-import { AnimeCardComponent } from '@/shared/anime/anime-card.component';
+import { FavoriteCardComponent } from '@/shared/anime/favorite-card.component';
 import { FavoritesService } from '@/shared/anime/favorites.service';
 import { AuthService } from '@/shared/auth/auth.service';
 import { ZardButtonComponent } from '@/shared/components/button';
@@ -17,7 +17,7 @@ export const routeMeta: RouteMeta = {
 
 @Component({
   selector: 'app-favorites',
-  imports: [AnimeCardComponent, NgIcon, RouterLink, SiteFooterComponent, SiteHeaderComponent, ZardButtonComponent],
+  imports: [FavoriteCardComponent, NgIcon, RouterLink, SiteFooterComponent, SiteHeaderComponent, ZardButtonComponent],
   viewProviders: [provideIcons({ lucideArrowRight, lucideCompass, lucideHeart, lucideLogIn })],
   template: `
     <div class="site-shell">
@@ -53,15 +53,18 @@ export const routeMeta: RouteMeta = {
           } @else if (favorites.status() === 'error') {
             <div class="empty-state"><span class="empty-icon"><ng-icon name="lucideCompass" /></span><h3>Your favorites couldn’t load.</h3><p>Check your connection and try again.</p><button type="button" z-button zType="outline" (click)="favorites.load()">Try again <ng-icon name="lucideArrowRight" /></button></div>
           } @else if (!favorites.ready()) {
-            <div class="anime-grid" aria-label="Loading favorites" aria-busy="true">
+            <div class="favorite-list" aria-label="Loading favorites" aria-busy="true">
               @for (placeholder of placeholders; track placeholder) {
-                <div class="anime-card skeleton-card"><div class="poster-wrap skeleton-shimmer"></div><div class="skeleton-line"></div><div class="skeleton-short"></div></div>
+                <div class="favorite-card favorite-skeleton">
+                  <div class="favorite-poster"><div class="poster-wrap skeleton-shimmer"></div></div>
+                  <div class="favorite-synopsis"><span class="skeleton-line"></span><span class="skeleton-line"></span><span class="skeleton-short"></span></div>
+                </div>
               }
             </div>
           } @else if (favorites.favorites().length) {
-            <div class="anime-grid">
+            <div class="favorite-list">
               @for (anime of favorites.favorites(); track anime.malId; let i = $index) {
-                <app-anime-card [anime]="anime" [eager]="i < 6" />
+                <article app-favorite-card [anime]="anime" [eager]="i < 2"></article>
               }
             </div>
           } @else {
@@ -82,7 +85,7 @@ export const routeMeta: RouteMeta = {
 export default class FavoritesPage {
   protected readonly favorites = inject(FavoritesService);
   protected readonly auth = inject(AuthService);
-  protected readonly placeholders = [1, 2, 3, 4, 5, 6];
+  protected readonly placeholders = [1, 2];
   protected readonly countLabel = computed(() => {
     const count = this.favorites.favorites().length;
     return `${count} ${count === 1 ? 'title' : 'titles'}`;
