@@ -298,6 +298,8 @@ h1 { margin: 19px 0 15px; font-family: var(--font-sans); font-size: clamp(var(--
 .favorite-card { display: grid; grid-template-columns: 210px minmax(0, 1fr); grid-template-areas: "poster synopsis" "news news"; gap: 30px 40px; padding: 36px 40px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--secondary); }
 .favorite-poster { grid-area: poster; align-self: start; }
 .favorite-poster .poster-wrap { height: auto; aspect-ratio: .72; }
+/* The section heading already shows the title. Collapse it rather than hide it: it holds the link that covers the card. */
+.favorite-poster .card-caption h3 { height: 0; margin: 0; overflow: hidden; }
 .favorite-synopsis { grid-area: synopsis; display: flex; flex-direction: column; min-width: 0; }
 .favorite-synopsis h2 { margin: 9px 0 16px; font-family: var(--font-sans); font-size: var(--text-4xl); font-weight: 600; line-height: 1.2; letter-spacing: -1.3px; }
 .synopsis-text { display: grid; gap: 12px; max-width: 72ch; }
