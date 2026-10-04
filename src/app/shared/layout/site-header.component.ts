@@ -17,8 +17,6 @@ import { ThemeService } from './theme.service';
         <span>anime<span class="wordmark-light">index</span></span>
       </a>
       <nav class="main-nav" aria-label="Main navigation">
-        <a routerLink="/" fragment="top-anime">Top anime</a>
-        <a routerLink="/" fragment="recommendations">Community picks</a>
         <a routerLink="/browse" routerLinkActive="is-active" ariaCurrentWhenActive="page">Browse</a>
         <a routerLink="/favorites" routerLinkActive="is-active" ariaCurrentWhenActive="page">Favorites</a>
       </nav>

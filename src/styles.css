@@ -183,7 +183,10 @@
 
 .site-shell { overflow: hidden; }
 .topbar, main, .site-footer { width: min(1120px, calc(100% - 64px)); margin-inline: auto; }
-.topbar { height: 82px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+/* Equal side columns keep the nav centered however wide the wordmark and actions are. */
+.topbar { height: 82px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; border-bottom: 1px solid var(--border); }
+.topbar .wordmark { justify-self: start; }
+.topbar .header-actions { justify-self: end; }
 .wordmark { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-sans); font-size: var(--text-xl); font-weight: 800; letter-spacing: -.9px; }
 .wordmark-light { color: var(--app-muted-text); font-weight: 500; }
 .brand-mark { display: inline-flex; align-items: end; gap: 2px; width: 21px; height: 22px; padding: 3px 0; }
@@ -195,7 +198,7 @@
 .theme-toggle { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 50%; color: var(--foreground); background: var(--card); cursor: pointer; transition: color .2s, background .2s, border-color .2s; }
 .theme-toggle:hover { color: var(--primary); border-color: var(--primary); }
 .theme-toggle ng-icon { font-size: 15px; }
-.main-nav { display: flex; gap: 36px; margin-left: -60px; color: var(--app-muted-text); font-size: var(--text-base); font-weight: 600; }
+.main-nav { display: flex; gap: 36px; color: var(--app-muted-text); font-size: var(--text-base); font-weight: 600; }
 .main-nav a, .mal-link, .data-credit a { transition: color .2s ease; }
 .main-nav a:hover, .mal-link:hover, .data-credit a:hover { color: var(--primary); }
 .mal-link { display: inline-flex; align-items: center; gap: 7px; font-size: var(--text-sm); color: var(--app-muted-text); font-weight: 600; }
@@ -439,12 +442,10 @@ a.news-item:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px;
 @media (min-width: 1200px) { .anime-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 @media (max-width: 900px) {
   .topbar, main, .site-footer { width: min(100% - 48px, 760px); }
-  /* Tighten the header so all four nav links fit beside the wordmark until the nav wraps at 640px. */
-  .main-nav { gap: 22px; margin-left: 0; font-size: var(--text-sm); }
-  .mal-link { font-size: 0; gap: 0; }
-  .mal-link ng-icon { font-size: 15px; }
-  .account-link { width: 34px; padding: 0; justify-content: center; font-size: 0; gap: 0; }
-  .account-link ng-icon { font-size: 15px; }
+  /* Icon-only actions leave the centered nav room beside the wordmark. */
+  .mal-link, .account-link { font-size: 0; gap: 0; }
+  .mal-link ng-icon, .account-link ng-icon { font-size: 15px; }
+  .account-link { width: 34px; padding: 0; justify-content: center; }
   .intro { min-height: 380px; }
   .intro-aside { width: 310px; flex-basis: 310px; margin-right: 0; transform: scale(.83); transform-origin: center right; }
   h1 { font-size: var(--text-6xl); }
@@ -469,15 +470,11 @@ a.news-item:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px;
   .favorite-poster { width: 150px; }
   .favorite-synopsis h2 { font-size: var(--text-2xl); letter-spacing: -.8px; }
   /* The nav gets its own row so the larger text doesn't crowd the wordmark. */
-  .topbar { height: auto; flex-wrap: wrap; row-gap: 4px; padding: 14px 0 0; }
+  .topbar { height: auto; display: flex; justify-content: space-between; flex-wrap: wrap; row-gap: 4px; padding: 14px 0 0; }
   .wordmark { font-size: var(--text-lg); }
   .main-nav { order: 3; width: 100%; gap: 22px; margin: 0; padding: 10px 0 12px; font-size: var(--text-sm); white-space: nowrap; }
   .header-actions { gap: 8px; }
   .theme-toggle { width: 31px; height: 31px; }
-  .mal-link { font-size: 0; gap: 0; }
-  .mal-link ng-icon { font-size: 15px; }
-  .account-link { width: 34px; padding: 0; justify-content: center; font-size: 0; gap: 0; }
-  .account-link ng-icon { font-size: 15px; }
   .intro { min-height: initial; }
   .intro-copy { padding: 42px 0 38px; }
   .eyebrow { padding: 6px 9px; font-size: var(--text-2xs); }
