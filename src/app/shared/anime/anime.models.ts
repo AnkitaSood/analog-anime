@@ -80,3 +80,9 @@ export interface AnimeSearchFilters {
 export function animeUrl(malId: number): string {
   return `https://myanimelist.net/anime/${malId}`;
 }
+
+/** An anime saved to the favorites database, as returned by `/api/favorites`. */
+export interface FavoriteAnime extends AnimeEntry {
+  url: string;
+  addedAt: string; // ISO timestamp
+}
