@@ -13,13 +13,14 @@ export function initBrowserSentry() {
   // Skip during SSR — Sentry browser SDK requires a DOM environment.
   if (typeof window === 'undefined') return;
 
-  const dsn =
-    ((window as unknown as Record<string, unknown>)['__SENTRY_DSN__'] as string | undefined) ?? '';
+  const dsn = import.meta.env['VITE_SENTRY_DSN'] ?? '';
 
   if (!dsn) {
     console.warn('[sentry] No SENTRY_DSN found — client observability disabled');
     return;
   }
+
+  const isProduction = import.meta.env.MODE === 'production';
 
   Sentry.init({
     dsn,
@@ -29,12 +30,12 @@ export function initBrowserSentry() {
       // Session replay — records DOM to replay user sessions on errors
       Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false }),
     ],
-    // Capture 100% of traces in dev/staging; reduce to 10–20% in production
-    tracesSampleRate: 1.0,
+    // Capture 100% of traces in dev/staging; reduce to 20% in production
+    tracesSampleRate: isProduction ? 0.2 : 1.0,
     // Record 10% of all sessions, but 100% of sessions with errors
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
-    environment: 'development',
+    environment: import.meta.env.MODE,
   });
 
   console.log('[sentry] Browser Sentry initialized');

@@ -59,6 +59,7 @@
     "@angular/build": "^22.0.0",
     "@angular/cli": "^22.0.0",
     "@angular/compiler-cli": "^22.0.0",
+    "@sentry/vite-plugin": "^5.4.0",
     "@types/better-sqlite3": "^9.6.0",
     "drizzle-kit": "^0.31.11",
     "jsdom": "^22.0.0",
