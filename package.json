@@ -12,7 +12,7 @@
     "build": "vite build",
     "watch": "vite build --watch",
     "test": "vitest",
-    "preview": "node dist/analog/server/index.mjs",
+    "preview": "node --import ./src/server/instrumentation.ts dist/analog/server/index.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
@@ -31,6 +31,9 @@
     "@angular/router": "^22.0.0",
     "@ng-icons/core": "^36.1.0",
     "@ng-icons/lucide": "^36.1.0",
+    "@sentry/angular": "^11.4.0",
+    "@sentry/node": "^11.4.0",
+    "@sentry/profiling-node": "^11.4.0",
     "@tailwindcss/vite": "^4.1.4",
     "better-auth": "^1.7.7",
     "better-sqlite3": "^13.0.3",

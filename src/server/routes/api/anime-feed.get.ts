@@ -1,5 +1,7 @@
 import { defineEventHandler } from 'h3';
 import { defineCachedFunction } from 'nitropack/runtime';
+import * as Sentry from '@sentry/node';
+import { withSpan, addLogBreadcrumb } from '../../utils/sentry-helpers';
 
 interface EdgeResponse<T> {
   data: T;
@@ -33,8 +35,22 @@ const RECOMMENDATION_COUNT = 8;
 const FOUR_HOURS_IN_SECONDS = 60 * 60 * 4;
 
 async function fetchAnimeApi<T>(path: string): Promise<T> {
+  const start = performance.now();
   const response = await fetch(`${ANIME_API}${path}`);
-  if (!response.ok) throw new Error(`jikan-edge responded with ${response.status}`);
+  const durationMs = performance.now() - start;
+
+  Sentry.setMeasurement('jikan.response_time', durationMs, 'millisecond');
+
+  if (!response.ok) {
+    addLogBreadcrumb('error', 'jikan', `Jikan API ${path} failed: ${response.status}`, {
+      url: path,
+      status: response.status,
+      durationMs,
+    });
+    throw new Error(`jikan-edge responded with ${response.status}`);
+  }
+
+  addLogBreadcrumb('info', 'jikan', `Jikan API ${path} OK`, { durationMs });
   const result = await response.json() as EdgeResponse<T>;
   return result.data;
 }
@@ -42,29 +58,48 @@ async function fetchAnimeApi<T>(path: string): Promise<T> {
 // Each list hits jikan-edge at most once every 4 hours. A failed fetch throws and isn't cached, so it's
 // retried on the next request; once 4 hours have passed the stale list is served while a fresh one loads.
 const getTopAnime = defineCachedFunction(
-  () => fetchAnimeApi<AnimeEntry[]>('/top/anime'),
+  () => withSpan('http.client', 'jikan.fetchTopAnime', async (span) => {
+    span.setAttribute('http.url', `${ANIME_API}/top/anime`);
+    const data = await fetchAnimeApi<AnimeEntry[]>('/top/anime');
+    span.setAttribute('anime.count', data.length);
+    return data;
+  }),
   { name: 'anime-feed', getKey: () => 'top-anime', maxAge: FOUR_HOURS_IN_SECONDS },
 );
 
 const getRecommendations = defineCachedFunction(
-  () => fetchAnimeApi<AnimeRecommendation[]>('/recommendations/anime'),
+  () => withSpan('http.client', 'jikan.fetchRecommendations', async (span) => {
+    span.setAttribute('http.url', `${ANIME_API}/recommendations/anime`);
+    const data = await fetchAnimeApi<AnimeRecommendation[]>('/recommendations/anime');
+    span.setAttribute('anime.count', data.length);
+    return data;
+  }),
   { name: 'anime-feed', getKey: () => 'recommendations', maxAge: FOUR_HOURS_IN_SECONDS },
 );
 
 export default defineEventHandler(async () => {
-  const [topResult, recommendationsResult] = await Promise.allSettled([
-    getTopAnime(),
-    getRecommendations(),
-  ]);
+  return Sentry.startSpan({ op: 'http.handler', name: 'GET /api/anime-feed' }, async () => {
+    const [topResult, recommendationsResult] = await Promise.allSettled([
+      getTopAnime(),
+      getRecommendations(),
+    ]);
 
-  return {
-    topAnime: topResult.status === 'fulfilled'
-      ? topResult.value.slice(0, TOP_ANIME_COUNT).map((anime) => ({ ...anime, url: anime.url ?? `https://myanimelist.net/anime/${anime.malId}` }))
-      : [],
-    recommendations: recommendationsResult.status === 'fulfilled' ? recommendationsResult.value.slice(0, RECOMMENDATION_COUNT) : [],
-    errors: {
-      topAnime: topResult.status === 'rejected',
-      recommendations: recommendationsResult.status === 'rejected',
-    },
-  };
+    if (topResult.status === 'rejected') {
+      addLogBreadcrumb('error', 'anime-feed', 'Failed to fetch top anime', { error: String(topResult.reason) });
+    }
+    if (recommendationsResult.status === 'rejected') {
+      addLogBreadcrumb('error', 'anime-feed', 'Failed to fetch recommendations', { error: String(recommendationsResult.reason) });
+    }
+
+    return {
+      topAnime: topResult.status === 'fulfilled'
+        ? topResult.value.slice(0, TOP_ANIME_COUNT).map((anime) => ({ ...anime, url: anime.url ?? `https://myanimelist.net/anime/${anime.malId}` }))
+        : [],
+      recommendations: recommendationsResult.status === 'fulfilled' ? recommendationsResult.value.slice(0, RECOMMENDATION_COUNT) : [],
+      errors: {
+        topAnime: topResult.status === 'rejected',
+        recommendations: recommendationsResult.status === 'rejected',
+      },
+    };
+  });
 });
