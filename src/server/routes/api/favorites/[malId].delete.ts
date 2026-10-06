@@ -4,6 +4,7 @@ import { requireUser } from '../../../auth';
 import { useDb } from '../../../db/client';
 import { favorites } from '../../../db/schema';
 import { withSpan, addLogBreadcrumb } from '../../../utils/sentry-helpers';
+import * as Sentry from '@sentry/node';
 
 export default defineEventHandler(async (event) => {
   const user = await requireUser(event);
@@ -11,7 +12,7 @@ export default defineEventHandler(async (event) => {
   if (!Number.isInteger(malId) || malId <= 0) throw createError({ statusCode: 400, statusMessage: 'Invalid anime id' });
 
   await withSpan('db', 'favorites.remove', async (span) => {
-    span.setAttribute('user.id', user.id);
+    Sentry.setUser({ id: user.id });
     span.setAttribute('anime.malId', malId);
 
     // Removing something that isn't saved is a no-op, so repeated clicks are harmless.

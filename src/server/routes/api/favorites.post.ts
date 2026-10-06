@@ -3,6 +3,7 @@ import { requireUser } from '../../auth';
 import { useDb } from '../../db/client';
 import { favorites, NewFavorite } from '../../db/schema';
 import { withSpan, addLogBreadcrumb } from '../../utils/sentry-helpers';
+import * as Sentry from '@sentry/node';
 
 function isNullableNumber(value: unknown): value is number | null {
   return value === null || (typeof value === 'number' && Number.isFinite(value));
@@ -41,7 +42,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const saved = await withSpan('db', 'favorites.add', async (span) => {
-    span.setAttribute('user.id', user.id);
+    Sentry.setUser({ id: user.id });
     span.setAttribute('anime.malId', favorite.malId);
     span.setAttribute('anime.title', favorite.title);
 

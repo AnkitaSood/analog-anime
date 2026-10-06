@@ -2,10 +2,7 @@ import { defineEventHandler } from 'h3';
 import { defineCachedFunction } from 'nitropack/runtime';
 import * as Sentry from '@sentry/node';
 import { withSpan, addLogBreadcrumb } from '../../utils/sentry-helpers';
-
-interface EdgeResponse<T> {
-  data: T;
-}
+import { fetchAnimeApi, ANIME_API } from '../../utils/jikan-client';
 
 interface AnimeEntry {
   malId: number;
@@ -28,32 +25,10 @@ interface AnimeRecommendation {
   username: string;
 }
 
-const ANIME_API = 'https://jikan.lucashdo.com/v1';
 // jikan-edge has no `limit`: top lists come back 50 at a time and recommendations 100 at a time.
 const TOP_ANIME_COUNT = 12;
 const RECOMMENDATION_COUNT = 8;
 const FOUR_HOURS_IN_SECONDS = 60 * 60 * 4;
-
-async function fetchAnimeApi<T>(path: string): Promise<T> {
-  const start = performance.now();
-  const response = await fetch(`${ANIME_API}${path}`);
-  const durationMs = performance.now() - start;
-
-  Sentry.setMeasurement('jikan.response_time', durationMs, 'millisecond');
-
-  if (!response.ok) {
-    addLogBreadcrumb('error', 'jikan', `Jikan API ${path} failed: ${response.status}`, {
-      url: path,
-      status: response.status,
-      durationMs,
-    });
-    throw new Error(`jikan-edge responded with ${response.status}`);
-  }
-
-  addLogBreadcrumb('info', 'jikan', `Jikan API ${path} OK`, { durationMs });
-  const result = await response.json() as EdgeResponse<T>;
-  return result.data;
-}
 
 // Each list hits jikan-edge at most once every 4 hours. A failed fetch throws and isn't cached, so it's
 // retried on the next request; once 4 hours have passed the stale list is served while a fresh one loads.

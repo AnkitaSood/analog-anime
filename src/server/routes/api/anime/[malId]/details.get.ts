@@ -2,10 +2,7 @@ import { createError, defineEventHandler, getRouterParam } from 'h3';
 import { defineCachedFunction } from 'nitropack/runtime';
 import * as Sentry from '@sentry/node';
 import { withSpan, addLogBreadcrumb } from '../../../../utils/sentry-helpers';
-
-interface EdgeResponse<T> {
-  data: T;
-}
+import { fetchAnimeApi } from '../../../../utils/jikan-client';
 
 interface AnimeNews {
   malId: number;
@@ -17,29 +14,9 @@ interface AnimeNews {
   author: string;
 }
 
-const ANIME_API = 'https://jikan.lucashdo.com/v1';
 const NEWS_COUNT = 3;
 const ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 const FOUR_HOURS_IN_SECONDS = 60 * 60 * 4;
-
-async function fetchAnimeApi<T>(path: string): Promise<T> {
-  const start = performance.now();
-  const response = await fetch(`${ANIME_API}${path}`);
-  const durationMs = performance.now() - start;
-
-  Sentry.setMeasurement('jikan.response_time', durationMs, 'millisecond');
-
-  if (!response.ok) {
-    addLogBreadcrumb('error', 'jikan', `Jikan API ${path} failed: ${response.status}`, {
-      url: path, status: response.status, durationMs,
-    });
-    throw new Error(`jikan-edge responded with ${response.status}`);
-  }
-
-  addLogBreadcrumb('info', 'jikan', `Jikan API ${path} OK`, { durationMs });
-  const result = (await response.json()) as EdgeResponse<T>;
-  return result.data;
-}
 
 // Synopses rarely change, so each is fetched at most once a day; news at most every 4 hours. As with the
 // home feed, a failed fetch isn't cached, and stale entries are served while fresh ones load.

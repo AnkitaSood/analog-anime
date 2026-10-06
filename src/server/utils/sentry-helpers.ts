@@ -17,7 +17,6 @@ export async function withSpan<T>(
         return await fn(span);
       } catch (err) {
         span.setStatus({ code: 2, message: String(err) }); // ERROR
-        Sentry.captureException(err);
         throw err;
       }
     },
@@ -53,8 +52,10 @@ export function captureLog(
   message: string,
   context?: Record<string, unknown>,
 ) {
-  if (context) {
-    Sentry.setContext('log_data', context);
-  }
-  Sentry.captureMessage(message, level);
+  Sentry.withScope((scope) => {
+    if (context) {
+      scope.setContext('log_data', context);
+    }
+    Sentry.captureMessage(message, level);
+  });
 }

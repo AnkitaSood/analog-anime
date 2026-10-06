@@ -4,12 +4,13 @@ import { requireUser } from '../../auth';
 import { useDb } from '../../db/client';
 import { favorites } from '../../db/schema';
 import { withSpan } from '../../utils/sentry-helpers';
+import * as Sentry from '@sentry/node';
 
 export default defineEventHandler(async (event) => {
   const user = await requireUser(event);
 
   return withSpan('db', 'favorites.list', async (span) => {
-    span.setAttribute('user.id', user.id);
+    Sentry.setUser({ id: user.id });
 
     const results = useDb()
       .select({

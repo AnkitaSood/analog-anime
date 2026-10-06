@@ -36,7 +36,6 @@ if (dsn) {
     // Attach server name for multi-instance deployments
     serverName: process.env['HOSTNAME'] ?? 'analog-anime-server',
   });
-  console.log(`[sentry] Server instrumentation initialized (environment: ${environment})`);
 } else {
   console.warn('[sentry] SENTRY_DSN not set — server observability disabled');
 }

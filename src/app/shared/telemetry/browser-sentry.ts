@@ -41,6 +41,4 @@ export function initBrowserSentry() {
     environment,
     release: import.meta.env['VITE_APP_VERSION'] ?? undefined,
   });
-
-  console.log(`[sentry] Browser Sentry initialized (environment: ${environment})`);
 }
