@@ -61,9 +61,11 @@ export default defineEventHandler(async () => {
 
     if (topResult.status === 'rejected') {
       addLogBreadcrumb('error', 'anime-feed', 'Failed to fetch top anime', { error: String(topResult.reason) });
+      Sentry.captureException(topResult.reason);
     }
     if (recommendationsResult.status === 'rejected') {
       addLogBreadcrumb('error', 'anime-feed', 'Failed to fetch recommendations', { error: String(recommendationsResult.reason) });
+      Sentry.captureException(recommendationsResult.reason);
     }
 
     return {

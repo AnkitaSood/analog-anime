@@ -52,8 +52,7 @@ export default defineEventHandler(async () => {
       return await getGenres();
     } catch (err) {
       addLogBreadcrumb('error', 'genres', 'Genres fetch failed, returning 502', { error: String(err) });
-      Sentry.captureException(err);
-      throw createError({ statusCode: 502, statusMessage: 'Genres are temporarily unavailable' });
+      throw createError({ statusCode: 502, statusMessage: 'Genres are temporarily unavailable', cause: err });
     }
   });
 });

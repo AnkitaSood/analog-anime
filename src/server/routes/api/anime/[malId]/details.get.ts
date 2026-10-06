@@ -52,9 +52,11 @@ export default defineEventHandler(async (event) => {
 
     if (synopsis.status === 'rejected') {
       addLogBreadcrumb('error', 'anime-details', 'Failed to fetch synopsis', { malId, error: String(synopsis.reason) });
+      Sentry.captureException(synopsis.reason);
     }
     if (news.status === 'rejected') {
       addLogBreadcrumb('error', 'anime-details', 'Failed to fetch news', { malId, error: String(news.reason) });
+      Sentry.captureException(news.reason);
     }
 
     return {
