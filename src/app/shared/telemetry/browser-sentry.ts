@@ -16,11 +16,12 @@ export function initBrowserSentry() {
   const dsn = import.meta.env['VITE_SENTRY_DSN'] ?? '';
 
   if (!dsn) {
-    console.warn('[sentry] No SENTRY_DSN found — client observability disabled');
+    console.warn('[sentry] No VITE_SENTRY_DSN found — client observability disabled');
     return;
   }
 
-  const isProduction = import.meta.env.MODE === 'production';
+  const environment = import.meta.env['VITE_SENTRY_ENVIRONMENT'] || import.meta.env.MODE;
+  const isProduction = environment === 'production';
 
   Sentry.init({
     dsn,
@@ -30,13 +31,16 @@ export function initBrowserSentry() {
       // Session replay — records DOM to replay user sessions on errors
       Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false }),
     ],
+    // Correlate browser fetch / XHR requests with server traces for APM
+    tracePropagationTargets: ['localhost', /^\//],
     // Capture 100% of traces in dev/staging; reduce to 20% in production
     tracesSampleRate: isProduction ? 0.2 : 1.0,
     // Record 10% of all sessions, but 100% of sessions with errors
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
-    environment: import.meta.env.MODE,
+    environment,
+    release: import.meta.env['VITE_APP_VERSION'] ?? undefined,
   });
 
-  console.log('[sentry] Browser Sentry initialized');
+  console.log(`[sentry] Browser Sentry initialized (environment: ${environment})`);
 }

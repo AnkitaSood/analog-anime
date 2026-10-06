@@ -12,7 +12,7 @@
     "build": "vite build",
     "watch": "vite build --watch",
     "test": "vitest",
-    "preview": "node --import ./src/server/instrumentation.ts dist/analog/server/index.mjs",
+    "preview": "NODE_ENV=production node --import ./src/server/instrumentation.ts dist/analog/server/index.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
